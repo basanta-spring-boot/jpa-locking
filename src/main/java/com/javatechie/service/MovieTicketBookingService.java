@@ -33,13 +33,25 @@ public class MovieTicketBookingService {
 
     @Transactional
     public void bookSeatPessimistically(Long seatId) {
-        Seat seat = seatRepository.findByIdAndLock(seatId);
 
+        System.out.println(Thread.currentThread().getName() + " is attempting to fetch the seat with a pessimistic lock...");
+
+        // Fetch the seat with a pessimistic lock
+        Seat seat = seatRepository.findByIdAndLock(seatId);
+        System.out.println(Thread.currentThread().getName() + " acquired the lock for seat ID: " + seatId);
+
+        // Check if the seat is already booked
         if (seat.isBooked()) {
+            System.out.println(Thread.currentThread().getName() + " failed: Seat ID " + seatId + " is already booked!");
             throw new RuntimeException("Seat already booked");
         }
 
-        seat.setBooked(true); // Mark as booked
-        seatRepository.save(seat); // Lock released after transaction
+        // Mark the seat as booked
+        System.out.println(Thread.currentThread().getName() + " is booking the seat...");
+        seat.setBooked(true);
+
+        // Save the updated seat status
+        seatRepository.save(seat); // Lock released after transaction commit
+        System.out.println(Thread.currentThread().getName() + " successfully booked the seat with ID: " + seatId);
     }
 }

@@ -24,7 +24,7 @@ public class BookingTestController {
     }
 
     @GetMapping("/pessimistic/{seatId}")
-    public String testPessimistic(@PathVariable Long seatId) {
+    public String testPessimistic(@PathVariable Long seatId) throws InterruptedException {
         pessimisticService.testPessimisticLocking(seatId);
         return "Pessimistic locking test started! Check logs for results.";
     }
