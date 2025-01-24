@@ -15,9 +15,8 @@ public class Seat {
 
     private boolean booked;
 
-    // Optimistic Locking column
     @Version
     private int version;
 
-    // Getters and Setters
+
 }

@@ -2,56 +2,54 @@ package com.javatechie.service;
 
 import com.javatechie.entity.Seat;
 import com.javatechie.repository.SeatRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MovieTicketBookingService {
 
-    private final SeatRepository seatRepository;
+    @Autowired
+    private SeatRepository seatRepository;
 
-    public MovieTicketBookingService(SeatRepository seatRepository) {
-        this.seatRepository = seatRepository;
-    }
 
     @Transactional
-    public Seat bookSeatOptimistically(Long seatId) {
-
+    public Seat bookSeat(Long seatId) {
+        //fetch the existing seat by id
         Seat seat = seatRepository.findById(seatId)
-                .orElseThrow(() -> new RuntimeException("Seat not found"));
+                .orElseThrow(() -> new RuntimeException("Seat not found with id " + seatId));
 
-        System.out.println(Thread.currentThread().getName() +
-                " fetched seat with version : " + seat.getVersion());
+        System.out.println(Thread.currentThread().getName() + " fetched seat with version " + seat.getVersion());
 
         if (seat.isBooked()) {
-            throw new RuntimeException("Seat already booked");
+            throw new RuntimeException("Seat already booked !");
         }
-
-        seat.setBooked(true); // Mark as booked
-        return seatRepository.save(seat); // Version check occurs here
+        //booking seat
+        seat.setBooked(true);
+        //version check will occurs here
+        return seatRepository.save(seat);
     }
 
     @Transactional
-    public void bookSeatPessimistically(Long seatId) {
+    public void bookSeatWithPessimistic(Long seatId) {
 
-        System.out.println(Thread.currentThread().getName() + " is attempting to fetch the seat with a pessimistic lock...");
+        System.out.println(Thread.currentThread().getName() + " is attempting to fetch the seat");
 
-        // Fetch the seat with a pessimistic lock
+        //fetch the seat with Pessimistic lock
         Seat seat = seatRepository.findByIdAndLock(seatId);
-        System.out.println(Thread.currentThread().getName() + " acquired the lock for seat ID: " + seatId);
 
-        // Check if the seat is already booked
+        System.out.println(Thread.currentThread().getName() + " acquired the lock for seat id " + seatId);
+
         if (seat.isBooked()) {
-            System.out.println(Thread.currentThread().getName() + " failed: Seat ID " + seatId + " is already booked!");
-            throw new RuntimeException("Seat already booked");
+            System.out.println(Thread.currentThread().getName() + " failed Seat Id " + seatId + " is already booked ");
+            throw new RuntimeException("Seat already booked !");
         }
+        //booking seat
+        System.out.println(Thread.currentThread().getName() + " booking the seat " + seatId);
 
-        // Mark the seat as booked
-        System.out.println(Thread.currentThread().getName() + " is booking the seat...");
         seat.setBooked(true);
-
-        // Save the updated seat status
-        seatRepository.save(seat); // Lock released after transaction commit
-        System.out.println(Thread.currentThread().getName() + " successfully booked the seat with ID: " + seatId);
+        //version check will occurs here
+        seatRepository.save(seat);
+        System.out.println(Thread.currentThread().getName() + " successfully book the seat with ID " + seatId);
     }
 }
